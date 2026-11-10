@@ -135,6 +135,32 @@ Every mutating tool requires `approved: true`. The inbox passes that only after 
 
 No LLM is in this layer today. When one is added, it will parse intent and phrase explanations; the arithmetic, rules, and actions stay deterministic.
 
+## Decision benchmark
+
+The rules are measured against a live LLM on the same facts and the same allowed action schema.
+
+```bash
+npm run bench
+```
+
+The harness runs 12 hand-built shop scenarios through:
+
+- the deterministic rule engine, and
+- `openai/gpt-oss-120b` on Groq at temperature 0.
+
+Latest result:
+
+| Engine | Accuracy | Actionability | Brier ↓ | ECE ↓ | Avg latency | Total cost |
+|---|---:|---:|---:|---:|---:|---:|
+| Rules | 100.0% | 100.0% | 0.037 | 0.187 | 4.8 ms | $0 |
+| LLM (gpt-oss-120b) | 75.0% | 100.0% | 0.197 | 0.173 | 984 ms | $0.001808 |
+
+The LLM missed the short-runway case and produced false positives on dead-stock-low-value and low-data. That is the useful part: the rules encode explicit policy thresholds; the LLM reasons from the same facts but does not know the shop’s thresholds.
+
+**Read this honestly:** the rule engine was designed alongside the scenarios, so 100% is **policy conformance**, not independent superiority. The next benchmark must use held-out, anonymized real ledgers and an accountant-reviewed gold set.
+
+Full report: [`bench/REPORT.md`](bench/REPORT.md) · raw results: [`bench/results.json`](bench/results.json).
+
 ## Offline licence
 
 Community mode is free and limited to one shop and 25 products. A signed licence unlocks the shop.

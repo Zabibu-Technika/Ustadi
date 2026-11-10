@@ -14,7 +14,8 @@
     "seed": "node scripts/seed.ts",
     "license": "node scripts/issue-license.ts",
     "test": "node --test tests/*.test.ts",
-    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json --noEmit"
+    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
+    "bench": "node bench/run.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

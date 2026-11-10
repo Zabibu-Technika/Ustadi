@@ -1,0 +1,573 @@
+{
+  "generatedAt": "2026-11-10T13:32:53.222Z",
+  "model": "openai/gpt-oss-120b",
+  "scenarios": [
+    {
+      "id": "healthy",
+      "title": "Healthy shop",
+      "gold": {
+        "action": "none"
+      },
+      "rules": {
+        "prediction": {
+          "action": "none",
+          "confidence": 0.75,
+          "reason": "No rule fired."
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 4.7631000000000085,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "none",
+          "qty": 0,
+          "confidence": 0.95,
+          "reason": "No stock risk, cash healthy, no pending orders or anomalies"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 888.7778,
+        "costUsd": 0.00018135,
+        "usage": {
+          "queue_time": 0.202336574,
+          "prompt_tokens": 724,
+          "prompt_time": 0.0338179,
+          "completion_tokens": 97,
+          "completion_time": 0.204623675,
+          "total_tokens": 821,
+          "total_time": 0.238441575,
+          "completion_tokens_details": {
+            "reasoning_tokens": 55
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "stockout",
+      "title": "Bread stockout",
+      "gold": {
+        "action": "reorder",
+        "entityId": "p-bread"
+      },
+      "rules": {
+        "prediction": {
+          "action": "reorder",
+          "entityId": "p-bread",
+          "qty": 8,
+          "confidence": 0.82,
+          "reason": "Reorder Bread now"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 30.959299999999928,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "reorder",
+          "entityId": "p-bread",
+          "qty": 17,
+          "confidence": 0.92,
+          "reason": "stock cover is only 1.3 days and lead time is 1 day, risking stockout"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 821.7149,
+        "costUsd": 0.00016125,
+        "usage": {
+          "queue_time": 0.384960771,
+          "prompt_tokens": 480,
+          "prompt_time": 0.02273243,
+          "completion_tokens": 119,
+          "completion_time": 0.249096541,
+          "total_tokens": 599,
+          "total_time": 0.271828971,
+          "completion_tokens_details": {
+            "reasoning_tokens": 64
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "stockout-edge",
+      "title": "Bread at the reorder edge",
+      "gold": {
+        "action": "reorder",
+        "entityId": "p-bread-edge"
+      },
+      "rules": {
+        "prediction": {
+          "action": "reorder",
+          "entityId": "p-bread-edge",
+          "qty": 3,
+          "confidence": 0.82,
+          "reason": "Reorder Bread now"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 1.6835999999999558,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "reorder",
+          "entityId": "p-bread-edge",
+          "qty": 12,
+          "confidence": 0.92,
+          "reason": "stock cover is only 3 days and velocity suggests risk of stockout"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 787.5535,
+        "costUsd": 0.00015585,
+        "usage": {
+          "queue_time": 0.310422682,
+          "prompt_tokens": 479,
+          "prompt_time": 0.080212493,
+          "completion_tokens": 112,
+          "completion_time": 0.237211739,
+          "total_tokens": 591,
+          "total_time": 0.317424232,
+          "completion_tokens_details": {
+            "reasoning_tokens": 62
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "cash-constrained-stockout",
+      "title": "Stockout with no cash",
+      "gold": {
+        "action": "cash"
+      },
+      "rules": {
+        "prediction": {
+          "action": "cash",
+          "entityId": "cash",
+          "confidence": 0.8,
+          "reason": "Close the cash gap"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 4.698600000000056,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "cash",
+          "qty": 0,
+          "confidence": 0.95,
+          "reason": "Cash position is negative and runway is below zero, indicating a cash gap."
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 1226.8040000000005,
+        "costUsd": 0.00011595,
+        "usage": {
+          "queue_time": 0.124011254,
+          "prompt_tokens": 488,
+          "prompt_time": 0.024450318,
+          "completion_tokens": 57,
+          "completion_time": 0.120333564,
+          "total_tokens": 545,
+          "total_time": 0.144783882,
+          "completion_tokens_details": {
+            "reasoning_tokens": 10
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "dead-stock",
+      "title": "Dead stock",
+      "gold": {
+        "action": "discount",
+        "entityId": "p-lamp"
+      },
+      "rules": {
+        "prediction": {
+          "action": "discount",
+          "entityId": "p-lamp",
+          "confidence": 0.82,
+          "reason": "Release cash from Slow moving lamp"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 1.5920999999999594,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "discount",
+          "entityId": "p-lamp",
+          "qty": 0,
+          "confidence": 0.95,
+          "reason": "No sales in 14 days indicate dead stock, so apply discount"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 659.1103000000003,
+        "costUsd": 0.00013965,
+        "usage": {
+          "queue_time": 0.271912625,
+          "prompt_tokens": 456,
+          "prompt_time": 0.030102139,
+          "completion_tokens": 95,
+          "completion_time": 0.198364173,
+          "total_tokens": 551,
+          "total_time": 0.228466312,
+          "completion_tokens_details": {
+            "reasoning_tokens": 48
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "dead-stock-low-value",
+      "title": "Low-value dead stock",
+      "gold": {
+        "action": "none"
+      },
+      "rules": {
+        "prediction": {
+          "action": "none",
+          "confidence": 0.75,
+          "reason": "No rule fired."
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 0.44240000000002055,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "discount",
+          "entityId": "p-cheap-lamp",
+          "qty": 0,
+          "confidence": 0.95,
+          "reason": "product has stock but zero sales and velocity, indicating dead stock"
+        },
+        "correct": false,
+        "actionable": true,
+        "latencyMs": 601.5608999999995,
+        "costUsd": 0.00013769999999999999,
+        "usage": {
+          "queue_time": 0.21945799,
+          "prompt_tokens": 458,
+          "prompt_time": 0.024043987,
+          "completion_tokens": 92,
+          "completion_time": 0.196659342,
+          "total_tokens": 550,
+          "total_time": 0.220703329,
+          "completion_tokens_details": {
+            "reasoning_tokens": 44
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "margin-leak",
+      "title": "Cooking oil margin leak",
+      "gold": {
+        "action": "price",
+        "entityId": "p-leaky-oil"
+      },
+      "rules": {
+        "prediction": {
+          "action": "price",
+          "entityId": "p-leaky-oil",
+          "confidence": 0.9,
+          "reason": "Protect margin on Cooking oil 1L"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 1.7600999999999658,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "price",
+          "entityId": "p-leaky-oil",
+          "qty": 0,
+          "confidence": 0.9,
+          "reason": "margin is low (9.4%) indicating a possible price adjustment"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 1855.878599999999,
+        "costUsd": 0.00013979999999999998,
+        "usage": {
+          "queue_time": 0.202449343,
+          "prompt_tokens": 477,
+          "prompt_time": 0.93410286,
+          "completion_tokens": 91,
+          "completion_time": 0.541883834,
+          "total_tokens": 568,
+          "total_time": 1.475986694,
+          "prompt_tokens_details": {
+            "cached_tokens": 256
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 42
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "cash-gap",
+      "title": "Cash gap",
+      "gold": {
+        "action": "cash"
+      },
+      "rules": {
+        "prediction": {
+          "action": "cash",
+          "entityId": "cash",
+          "confidence": 0.8,
+          "reason": "Close the cash gap"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 2.022299999999973,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "cash",
+          "qty": 0,
+          "confidence": 0.95,
+          "reason": "Cash position is negative and runway is below zero, indicating a cash gap"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 1045.764000000001,
+        "costUsd": 0.0001203,
+        "usage": {
+          "queue_time": 0.202727828,
+          "prompt_tokens": 482,
+          "prompt_time": 0.533021183,
+          "completion_tokens": 64,
+          "completion_time": 0.135439881,
+          "total_tokens": 546,
+          "total_time": 0.668461064,
+          "prompt_tokens_details": {
+            "cached_tokens": 256
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 20
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "cash-runway",
+      "title": "Short cash runway",
+      "gold": {
+        "action": "cash"
+      },
+      "rules": {
+        "prediction": {
+          "action": "cash",
+          "entityId": "cash",
+          "confidence": 0.8,
+          "reason": "Close the cash gap"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 1.8356999999999744,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "none",
+          "qty": 0,
+          "confidence": 1,
+          "reason": "No stock risk, pending orders, cash issues, or anomalies detected"
+        },
+        "correct": false,
+        "actionable": true,
+        "latencyMs": 890.3441000000003,
+        "costUsd": 0.00016725,
+        "usage": {
+          "queue_time": 0.375710043,
+          "prompt_tokens": 480,
+          "prompt_time": 0.051106996,
+          "completion_tokens": 127,
+          "completion_time": 0.268964809,
+          "total_tokens": 607,
+          "total_time": 0.320071805,
+          "completion_tokens_details": {
+            "reasoning_tokens": 84
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "order-follow-up",
+      "title": "Unfulfilled WhatsApp order",
+      "gold": {
+        "action": "fulfill",
+        "entityId": "o-1"
+      },
+      "rules": {
+        "prediction": {
+          "action": "fulfill",
+          "entityId": "o-1",
+          "confidence": 0.9,
+          "reason": "Fulfil Wanjiku · KSh 450.00"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 2.40319999999997,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "fulfill",
+          "entityId": "o-1",
+          "qty": 0,
+          "confidence": 0.99,
+          "reason": "Pending new order o-1 is over 30 hours old and should be fulfilled"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 635.1977000000006,
+        "costUsd": 0.00015465,
+        "usage": {
+          "queue_time": 0.214374542,
+          "prompt_tokens": 516,
+          "prompt_time": 0.028213961,
+          "completion_tokens": 103,
+          "completion_time": 0.229049355,
+          "total_tokens": 619,
+          "total_time": 0.257263316,
+          "completion_tokens_details": {
+            "reasoning_tokens": 52
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "sales-anomaly",
+      "title": "Sales anomaly",
+      "gold": {
+        "action": "investigate"
+      },
+      "rules": {
+        "prediction": {
+          "action": "investigate",
+          "entityId": "2026-11-10",
+          "confidence": 0.85,
+          "reason": "Sales are down 80%"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 5.42229999999995,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "investigate",
+          "qty": 0,
+          "confidence": 0.95,
+          "reason": "Significant sales drop despite adequate stock and cash suggests a sales anomaly"
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 642.6424999999999,
+        "costUsd": 0.00015255,
+        "usage": {
+          "queue_time": 0.07094243,
+          "prompt_tokens": 482,
+          "prompt_time": 0.125457756,
+          "completion_tokens": 107,
+          "completion_time": 0.224277221,
+          "total_tokens": 589,
+          "total_time": 0.349734977,
+          "completion_tokens_details": {
+            "reasoning_tokens": 61
+          }
+        },
+        "valid": true
+      }
+    },
+    {
+      "id": "low-data",
+      "title": "Low-data shop",
+      "gold": {
+        "action": "none"
+      },
+      "rules": {
+        "prediction": {
+          "action": "none",
+          "confidence": 0.75,
+          "reason": "No rule fired."
+        },
+        "correct": true,
+        "actionable": true,
+        "latencyMs": 0.2643000000000484,
+        "costUsd": 0
+      },
+      "llm": {
+        "prediction": {
+          "action": "discount",
+          "entityId": "p-low-data",
+          "qty": 0,
+          "confidence": 0.65,
+          "reason": "No sales and zero velocity indicate potential dead stock"
+        },
+        "correct": false,
+        "actionable": true,
+        "latencyMs": 1749.2214000000004,
+        "costUsd": 0.00018209999999999998,
+        "usage": {
+          "queue_time": 0.048102853,
+          "prompt_tokens": 454,
+          "prompt_time": 1.0846758969999999,
+          "completion_tokens": 152,
+          "completion_time": 0.319942697,
+          "total_tokens": 606,
+          "total_time": 1.404618594,
+          "prompt_tokens_details": {
+            "cached_tokens": 256
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 109
+          }
+        },
+        "valid": true
+      }
+    }
+  ],
+  "summary": {
+    "rules": {
+      "accuracy": 1,
+      "actionability": 1,
+      "brier": 0.03726666666666666,
+      "ece": 0.18666666666666668,
+      "latencyMs": 4.8205833333333175,
+      "costUsd": 0
+    },
+    "llm": {
+      "accuracy": 0.75,
+      "actionability": 1,
+      "brier": 0.19669999999999999,
+      "ece": 0.17333333333333345,
+      "latencyMs": 983.7141416666668,
+      "costUsd": 0.0018084000000000002
+    }
+  },
+  "llmErrors": []
+}

@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["core/**/*.ts", "apps/counter/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+  "include": ["core/**/*.ts", "apps/counter/**/*.ts", "bench/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
 }
