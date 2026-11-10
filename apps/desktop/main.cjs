@@ -3,6 +3,8 @@ const { spawn } = require("node:child_process");
 const path = require("node:path");
 const http = require("node:http");
 
+app.setName("Ustadi Counter");
+
 const appRoot = path.resolve(__dirname, "../..");
 const port = Number(process.env.USTADI_PORT || 4173);
 const dataDir = process.env.USTADI_DATA || path.join(app.getPath("userData"), "ledger");
