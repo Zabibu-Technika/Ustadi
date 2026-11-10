@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ustadi Counter</title>
+  <meta name="description" content="Ustadi Counter — the local-first merchant ledger. Sell, reconcile, and close the day.">
+  <meta name="theme-color" content="#123b2d">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23123b2d'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='34' font-weight='700' text-anchor='middle' fill='%23e8a83e'%3EU%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Ustadi Counter home">
+      <span class="brand-mark" aria-hidden="true">U</span>
+      <span class="brand-word">USTADI</span>
+      <span class="brand-sub">Counter</span>
+    </a>
+    <div class="topbar-mid">
+      <span class="live-dot" id="live-dot"></span>
+      <span id="sync-status">Local ledger</span>
+      <span class="sep">·</span>
+      <span id="today">—</span>
+    </div>
+    <div class="topbar-actions">
+      <a class="ghost" href="/pocket.html">Pocket ↗</a>
+      <span class="device-pill" id="device-name">…</span>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Counter sections">
+    <button class="tab is-active" data-tab="sell" type="button">Sell</button>
+    <button class="tab" data-tab="orders" type="button">Orders <span class="count" id="orders-count">0</span></button>
+    <button class="tab" data-tab="stock" type="button">Stock</button>
+    <button class="tab" data-tab="brief" type="button">Daily brief</button>
+    <button class="tab" data-tab="sync" type="button">Sync</button>
+    <span class="tabs-spacer"></span>
+    <span class="tabs-note" id="tabs-note">No cloud. Your ledger stays here.</span>
+  </nav>
+
+  <main>
+    <section id="tab-sell" class="panel is-active">
+      <div class="sell-layout">
+        <div class="catalog">
+          <div class="catalog-head">
+            <div>
+              <p class="eyebrow">The counter</p>
+              <h1>What are we selling?</h1>
+            </div>
+            <label class="search">
+              <span aria-hidden="true">⌕</span>
+              <input id="product-search" type="search" placeholder="Search products or scan a barcode" autocomplete="off">
+              <kbd>/</kbd>
+            </label>
+          </div>
+          <div class="chips" id="category-chips">
+            <button class="chip is-active" data-cat="all" type="button">All</button>
+            <button class="chip" data-cat="low" type="button">Low stock</button>
+            <button class="chip" data-cat="fast" type="button">Fast movers</button>
+          </div>
+          <div class="product-grid" id="product-grid" aria-live="polite"></div>
+          <p class="empty" id="products-empty" hidden>No products yet. Add your first product in Stock.</p>
+        </div>
+
+        <aside class="cart" aria-label="Current sale">
+          <div class="cart-head">
+            <div>
+              <p class="eyebrow">Current sale</p>
+              <h2 id="cart-count">0 items</h2>
+            </div>
+            <button class="text-button" id="clear-cart" type="button">Clear</button>
+          </div>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>Channel</span>
+              <select id="channel">
+                <option value="walk-in">Walk-in</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="instagram">Instagram</option>
+                <option value="online">Online</option>
+                <option value="phone">Phone</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Customer <em>optional</em></span>
+              <input id="customer-name" placeholder="Name" autocomplete="off">
+            </label>
+          </div>
+
+          <div class="cart-lines" id="cart-lines"></div>
+          <p class="cart-empty" id="cart-empty">Tap a product to start a sale.</p>
+
+          <div class="totals">
+            <div class="total-row"><span>Subtotal</span><strong id="subtotal">KSh 0.00</strong></div>
+            <label class="total-row discount-row"><span>Discount</span><input id="discount" type="number" min="0" step="1" value="0" inputmode="decimal"> </label>
+            <div class="total-row grand"><span>Total</span><strong id="total">KSh 0.00</strong></div>
+          </div>
+
+          <div class="payment">
+            <p class="eyebrow">Payment</p>
+            <div class="pay-methods" role="group" aria-label="Payment method">
+              <button class="pay-method is-active" data-method="cash" type="button">Cash</button>
+              <button class="pay-method" data-method="mpesa" type="button">M-Pesa</button>
+              <button class="pay-method" data-method="card" type="button">Card</button>
+            </div>
+            <div id="mpesa-fields" hidden>
+              <label class="field"><span>M-Pesa reference</span><input id="mpesa-ref" placeholder="e.g. QK4T2XXXXX" autocomplete="off"></label>
+              <label class="check"><input id="mpesa-pending" type="checkbox"> Mark as pending until confirmed</label>
+            </div>
+            <button class="primary" id="checkout" type="button" disabled>Complete sale <span aria-hidden="true">→</span></button>
+            <p class="fine">Cash, M-Pesa, and card land in one ledger. Pending M-Pesa stays visible until you confirm it.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="tab-orders" class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">Digital + phone</p>
+          <h1>Orders inbox</h1>
+          <p class="lede">WhatsApp, Instagram, phone, and online orders share the same stock pool as the counter.</p>
+        </div>
+      </div>
+      <div class="orders-layout">
+        <div class="orders-list" id="orders-list"></div>
+        <aside class="order-form card">
+          <p class="eyebrow">New order</p>
+          <h2>Log an order</h2>
+          <div class="field-grid">
+            <label class="field"><span>Channel</span>
+              <select id="order-channel"><option value="whatsapp">WhatsApp</option><option value="instagram">Instagram</option><option value="phone">Phone</option><option value="online">Online</option></select>
+            </label>
+            <label class="field"><span>Customer</span><input id="order-customer" placeholder="Name" autocomplete="off"></label>
+          </div>
+          <label class="field"><span>Phone <em>optional</em></span><input id="order-phone" placeholder="07…" autocomplete="off"></label>
+          <div class="order-picker">
+            <label class="field"><span>Product</span><select id="order-product"></select></label>
+            <label class="field qty"><span>Qty</span><input id="order-qty" type="number" min="1" value="1"></label>
+            <button class="secondary" id="add-order-line" type="button">Add</button>
+          </div>
+          <div class="order-lines" id="order-lines"></div>
+          <div class="order-total"><span>Total</span><strong id="order-total">Ksh 0.00</strong></div>
+          <label class="field"><span>Note <em>optional</em></span><input id="order-note" placeholder="Deliver before 5pm…" autocomplete="off"></label>
+          <button class="primary" id="create-order" type="button" disabled>Create order <span aria-hidden="true">→</span></button>
+        </aside>
+      </div>
+    </section>
+
+    <section id="tab-stock" class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">The shelf</p>
+          <h1>Stock & products</h1>
+          <p class="lede">One stock pool for the counter and every digital order. Low-stock items surface in the daily brief.</p>
+        </div>
+      </div>
+      <div class="stock-layout">
+        <div class="card table-card">
+          <table class="stock-table">
+            <thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Cost</th><th>Stock</th><th></th></tr></thead>
+            <tbody id="stock-body"></tbody>
+          </table>
+        </div>
+        <aside class="card">
+          <p class="eyebrow">New product</p>
+          <h2>Add to the shelf</h2>
+          <label class="field"><span>Name</span><input id="new-name" placeholder="e.g. Unga 2kg"></label>
+          <div class="field-grid">
+            <label class="field"><span>SKU</span><input id="new-sku" placeholder="UNGA-2"></label>
+            <label class="field"><span>Stock</span><input id="new-stock" type="number" min="0" value="0"></label>
+          </div>
+          <div class="field-grid">
+            <label class="field"><span>Price (KES)</span><input id="new-price" type="number" min="0" step="0.01" value="0"></label>
+            <label class="field"><span>Cost (KES)</span><input id="new-cost" type="number" min="0" step="0.01" value="0"></label>
+          </div>
+          <label class="field"><span>Low-stock alert at</span><input id="new-low" type="number" min="0" value="5"></label>
+          <button class="primary" id="add-product" type="button">Add product <span aria-hidden="true">→</span></button>
+        </aside>
+      </div>
+    </section>
+
+    <section id="tab-brief" class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">The day, in one page</p>
+          <h1>Daily brief</h1>
+          <p class="lede" id="brief-lede">Loading the ledger…</p>
+        </div>
+        <button class="secondary" id="print-brief" type="button">Print brief</button>
+      </div>
+      <div class="metric-grid" id="brief-metrics"></div>
+      <div class="brief-layout">
+        <article class="card brief-card">
+          <p class="eyebrow">What happened</p>
+          <p class="brief-text" id="brief-text">—</p>
+          <p class="eyebrow" style="margin-top:24px">What to do</p>
+          <ul class="actions-list" id="brief-actions"></ul>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Last 7 days</p>
+          <div class="bars" id="brief-bars"></div>
+          <p class="eyebrow" style="margin-top:24px">Best sellers</p>
+          <ol class="top-list" id="top-products"></ol>
+        </article>
+      </div>
+      <div class="two-col">
+        <article class="card">
+          <p class="eyebrow">Low stock</p>
+          <div id="low-stock"></div>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Pending orders</p>
+          <div id="pending-orders"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-sync" class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">Nearby sync</p>
+          <h1>No cloud. Just devices.</h1>
+          <p class="lede">Bring the phone or tablet onto the same Wi-Fi, or use the counter hotspot. The ledger syncs device to device.</p>
+        </div>
+      </div>
+      <div class="sync-layout">
+        <article class="card sync-card">
+          <p class="eyebrow">This device</p>
+          <h2 id="sync-device">—</h2>
+          <p class="fine" id="sync-device-id">—</p>
+          <div class="pairing">
+            <div>
+              <p class="eyebrow">Pairing code</p>
+              <p class="pair-code" id="pair-code">—</p>
+            </div>
+            <button class="secondary" id="copy-code" type="button">Copy code</button>
+          </div>
+          <p class="eyebrow">Nearby addresses</p>
+          <div class="address-list" id="lan-urls"></div>
+          <p class="fine">On the other device, open Ustadi and enter one of these addresses plus the pairing code.</p>
+          <div class="sync-actions">
+            <a class="secondary" href="/api/backup">Download backup</a>
+            <span class="fine">Encrypted at rest by your OS. Keep a copy on a second device or USB drive.</span>
+          </div>
+        </article>
+
+        <article class="card">
+          <p class="eyebrow">Sync with a peer</p>
+          <h2>Bring the ledger together</h2>
+          <p class="fine">Both devices must be on the same local network or hotspot. Nothing is sent to a cloud service.</p>
+          <label class="field"><span>Peer address</span><input id="peer-url" placeholder="http://192.168.1.20:4173"></label>
+          <label class="field"><span>Peer pairing code</span><input id="peer-code" placeholder="ABC123" autocomplete="off"></label>
+          <button class="primary" id="sync-peer" type="button">Sync now <span aria-hidden="true">⇄</span></button>
+          <p class="fine" id="sync-result"></p>
+          <div class="vector" id="sync-vector"></div>
+        </article>
+
+        <article class="card">
+          <p class="eyebrow">Licence</p>
+          <h2 id="license-mode">Community</h2>
+          <p class="fine" id="license-message">—</p>
+          <p class="fine" id="license-expiry"></p>
+          <p class="eyebrow">No cloud default</p>
+          <p class="fine">Ustadi does not need an account or a server. Billing and updates are the only optional online checks; the merchant’s ledger stays local.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <div class="modal" id="receipt-modal" hidden>
+    <div class="receipt" role="dialog" aria-modal="true" aria-labelledby="receipt-title">
+      <div class="receipt-head">
+        <div>
+          <p class="eyebrow">Ustadi Counter</p>
+          <h2 id="receipt-title">Sale complete</h2>
+        </div>
+        <button class="text-button no-print" id="close-receipt" type="button">Close</button>
+      </div>
+      <div id="receipt-body"></div>
+      <div class="receipt-actions no-print">
+        <button class="primary" id="print-receipt" type="button">Print receipt</button>
+        <button class="secondary" id="new-sale" type="button">New sale</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ustadi Counter — live demo</title>
+  <meta name="description" content="Try the Ustadi Counter demo: add products, take a cash or M-Pesa payment, and watch the daily brief change. Runs entirely in your browser.">
+  <meta name="theme-color" content="#123b2d">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23123b2d'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='34' font-weight='700' text-anchor='middle' fill='%23e8a83e'%3EU%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Back to Ustadi">
+      <span class="brand-mark" aria-hidden="true">U</span>
+      <span class="brand-word">USTADI</span>
+      <span class="brand-sub">Counter demo</span>
+    </a>
+    <div class="topbar-mid">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span>Runs in your browser</span>
+      <span class="sep">·</span>
+      <span>no server · no signup</span>
+    </div>
+    <div class="topbar-actions">
+      <a class="ghost" href="/">← Back to site</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="demo-head">
+      <p class="eyebrow">The live demo</p>
+      <h1>Try the counter.</h1>
+      <p class="lede">Click a product, choose cash, M-Pesa, or card, and take the sale. The daily brief below updates from the same ledger. Sample data only.</p>
+    </div>
+
+    <div class="sell-layout">
+      <div class="catalog">
+        <div class="catalog-head">
+          <div>
+            <p class="eyebrow">Demo shelf</p>
+            <h2>What are we selling?</h2>
+          </div>
+          <label class="search">
+            <span aria-hidden="true">⌕</span>
+            <input id="demo-search" type="search" placeholder="Search products" autocomplete="off">
+          </label>
+        </div>
+        <div class="chips" id="demo-chips">
+          <button class="chip is-active" data-cat="all" type="button">All</button>
+          <button class="chip" data-cat="low" type="button">Low stock</button>
+        </div>
+        <div class="product-grid" id="demo-products" aria-live="polite"></div>
+      </div>
+
+      <aside class="cart" aria-label="Demo cart">
+        <div class="cart-head">
+          <div><p class="eyebrow">Current sale</p><h2 id="demo-cart-count">0 items</h2></div>
+          <button class="text-button" id="demo-clear" type="button">Clear</button>
+        </div>
+        <div class="field-grid">
+          <label class="field"><span>Channel</span><select id="demo-channel"><option>Walk-in</option><option>WhatsApp</option><option>Instagram</option><option>Phone</option></select></label>
+          <label class="field"><span>Customer</span><input id="demo-customer" placeholder="Optional"></label>
+        </div>
+        <div class="cart-lines" id="demo-cart"></div>
+        <p class="cart-empty" id="demo-empty">Tap a product to start a sale.</p>
+        <div class="totals">
+          <div class="total-row"><span>Subtotal</span><strong id="demo-subtotal">KSh 0.00</strong></div>
+          <label class="total-row discount-row"><span>Discount</span><input id="demo-discount" type="number" min="0" step="1" value="0"></label>
+          <div class="total-row grand"><span>Total</span><strong id="demo-total">KSh 0.00</strong></div>
+        </div>
+        <div class="payment">
+          <p class="eyebrow">Payment</p>
+          <div class="pay-methods">
+            <button class="pay-method is-active" data-demo-method="cash" type="button">Cash</button>
+            <button class="pay-method" data-demo-method="mpesa" type="button">M-Pesa</button>
+            <button class="pay-method" data-demo-method="card" type="button">Card</button>
+          </div>
+          <button class="primary" id="demo-checkout" type="button" disabled>Complete sale <span aria-hidden="true">→</span></button>
+          <p class="fine">This is a browser demo. In the real counter, every sale is written to the local ledger and the receipt can print.</p>
+        </div>
+      </aside>
+    </div>
+
+    <section class="demo-brief">
+      <div class="panel-head">
+        <div><p class="eyebrow">The same ledger</p><h2>Daily brief</h2></div>
+        <button class="secondary" id="demo-reset" type="button">Reset demo</button>
+      </div>
+      <div class="metric-grid" id="demo-metrics"></div>
+      <div class="card">
+        <p class="eyebrow">What happened</p>
+        <p class="brief-text" id="demo-brief-text">No sales yet. Add a product to the cart and take the first sale.</p>
+        <p class="eyebrow" style="margin-top:20px">Low stock</p>
+        <div id="demo-low"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="demo-toast" role="status" aria-live="polite" hidden></div>
+
+  <div class="modal" id="receipt-modal" hidden>
+    <div class="receipt" role="dialog" aria-modal="true" aria-labelledby="receipt-title">
+      <div class="receipt-head">
+        <div><p class="eyebrow">Ustadi Counter · demo</p><h2 id="receipt-title">Sale complete</h2></div>
+        <button class="text-button no-print" id="close-receipt" type="button">Close</button>
+      </div>
+      <div id="receipt-body"></div>
+      <div class="receipt-actions no-print">
+        <button class="primary" id="print-receipt" type="button">Print receipt</button>
+        <button class="secondary" id="new-sale" type="button">New sale</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

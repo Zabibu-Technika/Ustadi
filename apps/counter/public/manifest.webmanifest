@@ -1,0 +1,17 @@
+{
+  "name": "Ustadi Pocket",
+  "short_name": "Ustadi",
+  "description": "The local-first merchant ledger. Counter and pocket.",
+  "start_url": "/pocket.html",
+  "display": "standalone",
+  "background_color": "#f4efe4",
+  "theme_color": "#123b2d",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%23123b2d'/%3E%3Ctext x='96' y='128' font-family='Georgia,serif' font-size='96' font-weight='700' text-anchor='middle' fill='%23e8a83e'%3EU%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

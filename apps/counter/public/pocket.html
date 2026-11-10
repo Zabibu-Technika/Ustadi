@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ustadi Pocket</title>
+  <meta name="description" content="Ustadi Pocket — the owner's view of the shop ledger.">
+  <meta name="theme-color" content="#123b2d">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23123b2d'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='34' font-weight='700' text-anchor='middle' fill='%23e8a83e'%3EU%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="pocket">
+  <header class="pocket-head">
+    <a class="brand" href="/" aria-label="Ustadi home">
+      <span class="brand-mark" aria-hidden="true">U</span>
+      <span class="brand-word">USTADI</span>
+      <span class="brand-sub">Pocket</span>
+    </a>
+    <span class="pocket-live"><span class="live-dot" id="pocket-live-dot"></span><span id="pocket-status">Local ledger</span></span>
+  </header>
+
+  <main class="pocket-main">
+    <section class="pocket-hero">
+      <p class="eyebrow">The shop, in your pocket</p>
+      <h1 id="pocket-title">Your ledger is loading.</h1>
+      <p class="fine" id="pocket-sync">Reading the local counter…</p>
+    </section>
+
+    <div class="pocket-metrics" id="pocket-metrics"></div>
+
+    <article class="card pocket-brief">
+      <p class="eyebrow">Daily brief</p>
+      <p class="brief-text" id="pocket-brief">—</p>
+      <p class="eyebrow" style="margin-top:20px">What to do</p>
+      <ul class="actions-list" id="pocket-actions"></ul>
+    </article>
+
+    <div class="two-col">
+      <article class="card">
+        <p class="eyebrow">Low stock</p>
+        <div id="pocket-low"><p class="fine">Loading…</p></div>
+      </article>
+      <article class="card">
+        <p class="eyebrow">Orders waiting</p>
+        <div id="pocket-orders"><p class="fine">Loading…</p></div>
+      </article>
+    </div>
+
+    <div class="pocket-actions">
+      <button class="primary" id="pocket-refresh" type="button">Sync now <span aria-hidden="true">↻</span></button>
+      <a class="secondary" href="/">Open counter</a>
+    </div>
+
+    <p class="fine pocket-note">No account. No cloud. The counter and the pocket sync when they are on the same local network or hotspot.</p>
+  </main>
+
+  <script src="/pocket.js"></script>
+</body>
+</html>

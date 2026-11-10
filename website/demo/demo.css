@@ -1,0 +1,22 @@
+/* Small overrides for the standalone demo page */
+
+body { padding-bottom: 40px; }
+.demo-head { margin: 34px 0 24px; }
+.demo-head h1 { font-size: clamp(42px, 6vw, 64px); }
+.demo-head .lede { max-width: 60ch; }
+.demo-head .eyebrow { margin-bottom: 10px; }
+.cart { top: 76px; }
+.demo-brief { margin-top: 28px; }
+.demo-brief .panel-head { margin-bottom: 16px; }
+.demo-brief .panel-head h2 { font-family: var(--serif); font-size: 32px; }
+.demo-brief .metric-grid { margin-bottom: 14px; }
+.demo-brief .brief-text { font-size: 18px; }
+.demo-brief .secondary { width: auto; padding: 10px 14px; }
+.demo-head + .sell-layout { align-items: start; }
+#demo-products .product-card { cursor: pointer; }
+
+@media (max-width: 800px) {
+  .demo-head { margin-top: 24px; }
+  .cart { top: 52px; }
+  .demo-brief .panel-head { flex-direction: column; gap: 8px; }
+}
