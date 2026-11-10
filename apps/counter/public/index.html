@@ -34,6 +34,7 @@
 
   <nav class="tabs" aria-label="Counter sections">
     <button class="tab is-active" data-tab="sell" type="button">Sell</button>
+    <button class="tab" data-tab="inbox" type="button">Inbox <span class="count" id="inbox-count">0</span></button>
     <button class="tab" data-tab="orders" type="button">Orders <span class="count" id="orders-count">0</span></button>
     <button class="tab" data-tab="stock" type="button">Stock</button>
     <button class="tab" data-tab="brief" type="button">Daily brief</button>
@@ -116,6 +117,25 @@
             <p class="fine">Cash, M-Pesa, and card land in one ledger. Pending M-Pesa stays visible until you confirm it.</p>
           </div>
         </aside>
+      </div>
+    </section>
+
+    <section id="tab-inbox" class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">The rules are always running</p>
+          <h1>Business inbox</h1>
+          <p class="lede">Deterministic proposals from the ledger: what changed, what it costs, what to do. Approve, dismiss, or open the evidence. No model guesses a number.</p>
+        </div>
+        <button class="secondary" id="refresh-inbox" type="button">Re-run rules</button>
+      </div>
+      <div class="inbox-summary" id="inbox-summary"></div>
+      <p class="fine" id="inbox-note"></p>
+      <div class="inbox-list" id="inbox-list"></div>
+      <p class="empty" id="inbox-empty" hidden>The rules see nothing urgent. The shop is inside its guardrails.</p>
+      <div class="tools-panel">
+        <p class="eyebrow">Tools the intelligence can use</p>
+        <div class="tools-list" id="inbox-tools"></div>
       </div>
     </section>
 

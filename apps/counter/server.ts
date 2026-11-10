@@ -10,6 +10,8 @@ import { parseStatement, reconcile } from "../../core/reconciliation.ts";
 import { seedDemo } from "../../core/seed.ts";
 import { eventsAfter, mergeEvents, syncWithPeer } from "../../core/sync.ts";
 import { project, saleTotals, validateProduct, validateSale } from "../../core/projection.ts";
+import { generateIntelligence } from "../../core/intelligence/engine.ts";
+import { findTool } from "../../core/intelligence/tools.ts";
 import { formatKes, localDate, randomId } from "../../core/canonical.ts";
 import type { LedgerEvent, Order, Product, Sale, SaleChannel, SaleLine, SalePayment } from "../../core/types.ts";
 import type { IncomingHttpHeaders } from "node:http";
@@ -49,6 +51,7 @@ function lanUrls(): string[] {
 
 function state() {
   const projection = project(store.events);
+  const intelligence = generateIntelligence(projection, store.events);
   return {
     meta: {
       ...store.meta,
@@ -58,6 +61,7 @@ function state() {
     },
     projection,
     brief: buildBrief(projection),
+    intelligence,
     license: licenseStatus(DATA_DIR),
     vector: store.vector(),
     serverTime: new Date().toISOString(),
@@ -244,7 +248,8 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
       stock: Number(input.stock ?? 0),
       lowStockAt: Number(input.lowStockAt ?? 5),
       active: input.active !== false,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      supplierLeadDays: Number(input.supplierLeadDays ?? existing?.supplierLeadDays ?? 2)
     };
     const errors = validateProduct(product);
     if (!product.name) errors.push("name is required");
@@ -410,6 +415,170 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
     return;
   }
 
+  if (path === "/api/intelligence" && req.method === "GET") {
+    const projection = project(store.events);
+    json(res, 200, generateIntelligence(projection, store.events));
+    return;
+  }
+
+  const decisionRoute = /^\/api\/decisions\/([^/]+)$/.exec(path);
+  if (decisionRoute && req.method === "POST") {
+    const decisionId = decodeURIComponent(decisionRoute[1]!);
+    const input = await body(req);
+    const status = String(input.status ?? "");
+    if (!["approved", "dismissed", "done"].includes(status)) {
+      json(res, 400, { error: "status must be approved, dismissed, or done" });
+      return;
+    }
+    const projection = project(store.events);
+    const intelligence = generateIntelligence(projection, store.events);
+    const decision = intelligence.decisions.find((item) => item.decisionId === decisionId);
+    if (!decision) {
+      json(res, 404, { error: "decision not found or already closed" });
+      return;
+    }
+    store.appendLocal("decision.recorded", {
+      decisionId,
+      ruleId: decision.ruleId,
+      status,
+      note: typeof input.note === "string" ? input.note : "",
+      at: new Date().toISOString()
+    });
+    broadcast();
+    json(res, 200, state());
+    return;
+  }
+
+  if (path === "/api/intelligence/run" && req.method === "POST") {
+    const projection = project(store.events);
+    const intelligence = generateIntelligence(projection, store.events);
+    broadcast();
+    json(res, 200, intelligence);
+    return;
+  }
+
+  const toolRoute = /^\/api\/tools\/([^/]+)$/.exec(path);
+  if (toolRoute && req.method === "POST") {
+    const toolId = decodeURIComponent(toolRoute[1]!);
+    const tool = findTool(toolId);
+    if (!tool) {
+      json(res, 404, { error: "unknown tool" });
+      return;
+    }
+    const input = await body(req);
+    if (tool.mutating && input.approved !== true) {
+      json(res, 403, { error: "this tool mutates the ledger and requires approval: true" });
+      return;
+    }
+
+    if (tool.id === "draft_message") {
+      json(res, 200, { ok: true, tool: tool.id, text: String(input.text ?? "") });
+      return;
+    }
+
+    if (tool.id === "record_decision") {
+      const decisionId = String(input.decisionId ?? "");
+      const status = String(input.status ?? "approved");
+      if (!decisionId || !["approved", "dismissed", "done"].includes(status)) {
+        json(res, 400, { error: "decisionId and a valid status are required" });
+        return;
+      }
+      const intelligence = generateIntelligence(project(store.events), store.events);
+      const decision = intelligence.decisions.find((item) => item.decisionId === decisionId);
+      if (!decision) {
+        json(res, 404, { error: "decision not found or already closed" });
+        return;
+      }
+      store.appendLocal("decision.recorded", {
+        decisionId,
+        ruleId: decision.ruleId,
+        status,
+        note: String(input.note ?? ""),
+        at: new Date().toISOString()
+      });
+      broadcast();
+      json(res, 200, { ok: true, tool: tool.id, state: state() });
+      return;
+    }
+
+    if (tool.id === "fulfill_order") {
+      const orderId = String(input.orderId ?? "");
+      const projection = project(store.events);
+      const order = projection.orders.find((item) => item.orderId === orderId);
+      if (!order) {
+        json(res, 404, { error: "order not found" });
+        return;
+      }
+      if (order.status === "fulfilled") {
+        json(res, 400, { error: "order already fulfilled" });
+        return;
+      }
+      try {
+        const sale = buildSale({
+          channel: order.channel,
+          lines: order.lines.map((line) => ({ productId: line.productId, qty: line.qty })),
+          method: input.method ?? "mpesa",
+          status: input.status ?? "confirmed",
+          reference: input.reference,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          orderId
+        });
+        store.appendLocal("sale.completed", sale as unknown as Record<string, unknown>);
+        store.appendLocal("order.fulfilled", { orderId });
+        if (typeof input.decisionId === "string" && input.decisionId) {
+          store.appendLocal("decision.recorded", {
+            decisionId: input.decisionId,
+            ruleId: "order-follow-up",
+            status: "done",
+            note: "fulfilled by tool",
+            at: new Date().toISOString()
+          });
+        }
+        broadcast();
+        json(res, 200, { ok: true, tool: tool.id, sale, state: state() });
+      } catch (error) {
+        json(res, 400, { error: (error as Error).message });
+      }
+      return;
+    }
+
+    if (tool.id === "adjust_stock") {
+      const productId = String(input.productId ?? "");
+      const delta = Number(input.delta ?? 0);
+      if (!productId || !Number.isInteger(delta) || delta === 0) {
+        json(res, 400, { error: "productId and a non-zero integer delta are required" });
+        return;
+      }
+      store.appendLocal("stock.adjusted", { productId, delta, reason: String(input.reason ?? "tool") });
+      broadcast();
+      json(res, 200, { ok: true, tool: tool.id, state: state() });
+      return;
+    }
+
+    if (tool.id === "record_expense") {
+      const amountCents = Number(input.amountCents ?? 0);
+      if (!Number.isInteger(amountCents) || amountCents <= 0) {
+        json(res, 400, { error: "amountCents must be a positive integer" });
+        return;
+      }
+      store.appendLocal("expense.recorded", {
+        expenseId: randomId("exp-"),
+        category: String(input.category ?? "Other"),
+        amountCents,
+        note: String(input.note ?? ""),
+        businessDate: String(input.businessDate ?? localDate()),
+        createdAt: new Date().toISOString()
+      });
+      broadcast();
+      json(res, 200, { ok: true, tool: tool.id, state: state() });
+      return;
+    }
+
+    json(res, 400, { error: "tool is not enabled" });
+    return;
+  }
+
   if (path === "/api/sync/state" && req.method === "GET") {
     if (!requirePair(req, res, url)) return;
     json(res, 200, { deviceId: store.meta.deviceId, vector: store.vector(), serverTime: new Date().toISOString() });
@@ -497,6 +666,11 @@ server.listen(PORT, HOST, () => {
   console.log("  Your data stays on this machine. Sync is peer-to-peer on the local network.");
   console.log("");
 });
+
+const heartbeat = setInterval(() => {
+  if (clients.size > 0) broadcast();
+}, 5 * 60 * 1000);
+heartbeat.unref?.();
 
 process.on("SIGINT", () => {
   for (const client of clients) client.end();

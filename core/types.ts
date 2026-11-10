@@ -13,6 +13,7 @@ export interface Product {
   lowStockAt: number;
   active: boolean;
   updatedAt: string;
+  supplierLeadDays?: number;
 }
 
 export interface SaleLine {
@@ -102,6 +103,7 @@ export type EventType =
   | "payment.recorded"
   | "expense.recorded"
   | "day.closed"
+  | "decision.recorded"
   | "license.activated";
 
 export interface LedgerEvent {

@@ -35,6 +35,15 @@ function render(state, offline = false) {
   $("#pocket-brief").textContent = brief.text;
   $("#pocket-actions").innerHTML = brief.actions.map((action) => `<li>${esc(action)}</li>`).join("");
 
+  const decisions = state.intelligence?.decisions ?? [];
+  $("#pocket-decisions").innerHTML = decisions.length
+    ? decisions.slice(0, 3).map((decision) => `
+      <div class="low-item">
+        <strong>${esc(decision.title)}</strong>
+        <span class="pill">${kes(decision.impactCents)}</span>
+      </div>`).join("")
+    : `<p class="fine">Nothing urgent. The rules are watching the ledger.</p>`;
+
   $("#pocket-low").innerHTML = state.projection.lowStock.length
     ? state.projection.lowStock.map((product) => `
       <div class="low-item"><strong>${esc(product.name)}</strong><span class="pill">${product.stock} left</span></div>`).join("")

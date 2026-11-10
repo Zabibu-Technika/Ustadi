@@ -69,6 +69,7 @@ function renderAll() {
   $("#tabs-note").textContent = `${state.projection.sales.length} sales · ${state.projection.products.length} products · local ledger`;
   renderProducts();
   renderCart();
+  renderInbox();
   renderOrders();
   renderStock();
   renderBrief();
@@ -450,6 +451,116 @@ function printBrief() {
   setTimeout(() => windowRef.print(), 250);
 }
 
+/* ---------- business inbox ---------- */
+
+function renderInbox() {
+  if (!state) return;
+  const intelligence = state.intelligence;
+  const decisions = intelligence?.decisions ?? [];
+  const high = decisions.filter((decision) => decision.severity === "high").length;
+  const impact = decisions.reduce((sum, decision) => sum + decision.impactCents, 0);
+  $("#inbox-count").textContent = String(decisions.length);
+  $("#inbox-summary").innerHTML = `
+    <div class="summary-card"><strong>${decisions.length}</strong><span>open decision${decisions.length === 1 ? "" : "s"}</span></div>
+    <div class="summary-card"><strong>${high}</strong><span>high severity</span></div>
+    <div class="summary-card"><strong>${kes(impact)}</strong><span>value at stake</span></div>
+    <div class="summary-card"><strong>${Math.round((intelligence?.facts.dataQuality ?? 0) * 100)}%</strong><span>data quality</span></div>`;
+
+  const proactive = intelligence?.proactive;
+  $("#inbox-note").textContent = proactive
+    ? `Rules last ran ${new Date(proactive.lastEvaluatedAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })} · heartbeat every ${Math.round(proactive.heartbeatSeconds / 60)} min · ${proactive.triggers.length} triggers.`
+    : "Rules are evaluated from the local ledger.";
+  $("#inbox-tools").innerHTML = (intelligence?.tools ?? []).map((tool) => `
+    <span class="tool-item"><b>${esc(tool.name)}</b><span class="tool-badge">${esc(tool.capability)}</span>${tool.requiresApproval ? "<span class=\"tool-badge\">approval</span>" : ""}</span>`).join("");
+
+  $("#inbox-list").innerHTML = decisions.map((decision) => {
+    const evidence = decision.evidence.map((item) => `
+      <div class="evidence-item"><span class="evidence-label">${esc(item.label)}</span><span class="evidence-value">${esc(item.value)}</span></div>`).join("");
+    const contributions = decision.diagnosis?.contributions?.length
+      ? `<ul class="contrib-list">${decision.diagnosis.contributions.map((item) => `
+          <li><span>${esc(item.label)}</span><span>${item.valueCents < 0 ? "−" : ""}${kes(Math.abs(item.valueCents))} · ${Math.round(item.share * 100)}%</span></li>`).join("")}</ul>`
+      : "";
+    const assumptions = decision.assumptions?.length
+      ? `<ul class="assumption-list">${decision.assumptions.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`
+      : "";
+    const draft = decision.draft
+      ? `<div class="decision-draft"><span class="eyebrow">Draft</span><p>${esc(decision.draft.text)}</p><button class="decision-btn" data-copy-draft="${esc(decision.draft.text)}" type="button">Copy draft</button></div>`
+      : "";
+    const fulfill = decision.action?.type === "fulfill"
+      ? `<button class="decision-btn approve" data-fulfill="${esc(decision.action.orderId ?? "")}" data-decision-id="${esc(decision.decisionId)}" type="button">Fulfil now</button>`
+      : "";
+    const actions = decision.status === "approved"
+      ? `${fulfill}<button class="decision-btn approve" data-decision="${esc(decision.decisionId)}" data-status="done" type="button">Mark done</button>
+         <button class="decision-btn" data-decision="${esc(decision.decisionId)}" data-status="dismissed" type="button">Dismiss</button>`
+      : `${fulfill}<button class="decision-btn approve" data-decision="${esc(decision.decisionId)}" data-status="approved" type="button">Approve</button>
+         <button class="decision-btn" data-decision="${esc(decision.decisionId)}" data-status="dismissed" type="button">Dismiss</button>`;
+    return `
+      <article class="decision-card severity-${esc(decision.severity)} ${decision.status === "approved" ? "is-approved" : ""}">
+        <div class="decision-top">
+          <span class="decision-rule">${esc(decision.ruleName)} · ${esc(decision.trigger)}</span>
+          <span class="severity-pill severity-${esc(decision.severity)}">${esc(decision.severity)}</span>
+          ${decision.status === "approved" ? '<span class="status-pill">approved</span>' : ""}
+        </div>
+        <h2 class="decision-title">${esc(decision.title)}</h2>
+        <p class="decision-summary">${esc(decision.summary)}</p>
+        <div class="decision-metrics">
+          <span><b>${kes(decision.impactCents)}</b> impact</span>
+          <span><b>${Math.round(decision.confidence * 100)}%</b> confidence</span>
+          <span><b>${esc(decision.action.label)}</b></span>
+        </div>
+        <div class="decision-evidence">${evidence}</div>
+        <details class="decision-details">
+          <summary>Why this? · evidence and assumptions</summary>
+          ${decision.diagnosis ? `<p class="diagnosis-summary">${esc(decision.diagnosis.summary)}</p>${contributions}` : ""}
+          ${assumptions}
+        </details>
+        ${draft}
+        <div class="decision-actions">${actions}<span class="fine">Approval records the decision; it does not move money by itself.</span></div>
+      </article>`;
+  }).join("");
+  $("#inbox-empty").hidden = decisions.length > 0;
+}
+
+async function refreshInbox() {
+  try {
+    const intelligence = await api("/api/intelligence/run", { method: "POST", body: "{}" });
+    if (state) state.intelligence = intelligence;
+    renderInbox();
+    toast("Rules re-run from the local ledger.");
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+async function updateDecision(decisionId, status) {
+  try {
+    const result = await api("/api/tools/record_decision", {
+      method: "POST",
+      body: JSON.stringify({ decisionId, status, approved: true })
+    });
+    state = result.state;
+    renderAll();
+    toast(status === "approved" ? "Decision approved." : status === "done" ? "Decision marked done." : "Decision dismissed.");
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+async function fulfillOrderTool(orderId, decisionId) {
+  if (!orderId) return;
+  try {
+    const result = await api("/api/tools/fulfill_order", {
+      method: "POST",
+      body: JSON.stringify({ orderId, method: "mpesa", status: "confirmed", approved: true, decisionId })
+    });
+    state = result.state;
+    renderAll();
+    toast("Order fulfilled by the tool · sale written to the ledger.");
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
 /* ---------- sync ---------- */
 
 function renderSync() {
@@ -616,8 +727,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   $("#sync-peer").addEventListener("click", syncPeer);
+  $("#refresh-inbox").addEventListener("click", refreshInbox);
+  $("#inbox-list").addEventListener("click", async (event) => {
+    const copy = event.target.closest("[data-copy-draft]");
+    if (copy) {
+      try {
+        await navigator.clipboard.writeText(copy.dataset.copyDraft || "");
+        toast("Draft copied.");
+      } catch {
+        toast("Copy failed; select the draft manually.");
+      }
+      return;
+    }
+    const fulfill = event.target.closest("[data-fulfill]");
+    if (fulfill) {
+      await fulfillOrderTool(fulfill.dataset.fulfill, fulfill.dataset.decisionId);
+      return;
+    }
+    const decision = event.target.closest("[data-decision]");
+    if (decision) await updateDecision(decision.dataset.decision, decision.dataset.status);
+  });
 
   loadState();
   connectEvents();
   renderOrderLines();
+  const requestedTab = new URLSearchParams(location.search).get("tab");
+  if (requestedTab && ["sell", "inbox", "orders", "stock", "brief", "sync"].includes(requestedTab)) {
+    setTab(requestedTab);
+  }
 });

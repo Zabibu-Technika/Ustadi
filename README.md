@@ -88,6 +88,53 @@ The sync endpoints require the pairing code. This is a local-network MVP: do not
 
 The counter has **Download backup** in the Sync panel (`GET /api/backup`). It exports the event log and device metadata as JSON. Keep a copy on a second device, a USB drive, or the merchant's own storage. There is no Ustadi cloud copy by default.
 
+## Intelligence layer
+
+Ustadi has a deterministic **System One** layer: facts, rules, diagnosis, planning, and typed decisions. It is designed to behave like an agent without letting a model invent a number.
+
+```
+ledger → facts → rules → diagnosis → plan → decision → approval → tool → outcome
+```
+
+The pieces live in `core/intelligence/`:
+
+| File | Role |
+|---|---|
+| `facts.ts` | Stock cover, velocity, margin, cash runway, pending orders, channel mix, data quality. |
+| `rules.ts` | Stockout, dead stock, margin leak, cash gap, order follow-up, sales anomaly. |
+| `diagnose.ts` | Contribution analysis and plain-language evidence. |
+| `plan.ts` | Reorder quantities, cash-constrained plans, collection and margin actions. |
+| `tools.ts` | The only actions the intelligence may call. |
+| `triggers.ts` | Event, schedule, and threshold triggers. |
+| `engine.ts` | Ranked, typed decisions with status, confidence, and receipts. |
+
+A decision carries `ruleId`, `trigger`, `severity`, `impactCents`, `confidence`, `evidence`, `assumptions`, a diagnosis, a proposed action, and an optional draft. The inbox lets the owner approve, dismiss, or execute it.
+
+### Proactivity
+
+The counter server broadcasts a state refresh after every ledger event and on a five-minute heartbeat. The rules re-run against the current projection, so the inbox reacts to a sale, an order, a stock movement, an expense, or simply time passing. It is a durable ledger plus triggers, not a chat prompt.
+
+### Tools, not vibes
+
+The intelligence layer can call:
+
+- `draft_message` — render a WhatsApp/note draft; never sends.
+- `record_decision` — approve or dismiss a proposal.
+- `fulfill_order` — create the sale, take payment, mark the order fulfilled.
+- `adjust_stock` — record a stock movement.
+- `record_expense` — add an expense.
+
+Every mutating tool requires `approved: true`. The inbox passes that only after a human click. Tool calls write to the same append-only ledger and appear in the receipt trail.
+
+### API
+
+- `GET /api/intelligence` — facts, ranked decisions, tool catalog, proactive status.
+- `POST /api/intelligence/run` — force a rule run.
+- `POST /api/decisions/:id` — approve, dismiss, or mark done.
+- `POST /api/tools/:id` — call a tool with explicit approval.
+
+No LLM is in this layer today. When one is added, it will parse intent and phrase explanations; the arithmetic, rules, and actions stay deterministic.
+
 ## Offline licence
 
 Community mode is free and limited to one shop and 25 products. A signed licence unlocks the shop.
@@ -169,10 +216,13 @@ The public site is deployed at **https://ustadiapp.vercel.app** (the shorter `us
 - TLS and hardened pairing for an untrusted LAN.
 - A packaged installer. `npm run desktop` is the working shell; packaging is the next step.
 - A hosted cloud sync layer. That is a product decision, not an accident.
+- A language/LLM shell. The intelligence layer is rules-first; an LLM will parse intent and phrase explanations, never calculate.
+- Statistically calibrated confidence. Current confidence is a transparent rule heuristic, not a trained probability.
+- Customer credit/receivables and supplier purchase orders. Cash-gap decisions use expenses and pending orders; reorder approval records the plan but does not create a purchase order yet.
 
 ## Status
 
-`v0.1.0` — a working local-first core, counter, pocket, nearby sync, offline licence, demo, and website. It is ready to pilot with a real shop and a real M-Pesa statement.
+`v0.2.0` — a working local-first core, counter, pocket, nearby sync, offline licence, deterministic intelligence layer, demo, and website. It is ready to pilot with a real shop and a real M-Pesa statement.
 
 ## Licence
 
