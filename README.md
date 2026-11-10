@@ -51,6 +51,12 @@ npm run desktop
 
 Electron starts the local counter server and opens the counter in a desktop window. The ledger lives in the Electron user-data directory. Node 24 must be on `PATH` for the shell to start the server.
 
+If npm's script policy skipped Electron's postinstall, run this once:
+
+```bash
+node node_modules/electron/install.js
+```
+
 ### Tests and typecheck
 
 ```bash
